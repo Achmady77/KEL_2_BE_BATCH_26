@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Situs</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark" style="background: linear-gradient(to right, #ffe600, #ff5e00);">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                <img th:src="@{/images/historialogo.png}" alt="Logo" width="28" height="50" class="d-inline-block align-text-top me-2">
+                Situs Sejarah App
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a th:href="@{/logout}" class="btn btn-danger">Logout</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-3">
+        <h1 class="mb-4">Situs Sejarah</h1>
+        <div class="d-flex justify-content-between mb-3">
+            <a th:href="@{/situs/new}" class="btn btn-primary">Add New Situs</a>
+        </div>
+
+        <!-- Toast Container -->
+        <div class="toast-container position-fixed bottom-0 end-0 p-3">
+            <div id="liveToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true" th:classappend="${messageType == 'success' ? 'text-bg-success' : 'text-bg-danger'}" th:if="${message}">
+                <div class="toast-header">
+                    <strong class="me-auto">Notification</strong>
+                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+                <div class="toast-body" th:text="${message}">
+                    Hello, world! This is a toast message.
+                </div>
+            </div>
+        </div>
+
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Title</th>
+                    <th>Content</th>
+                    <th>Image</th>
+                    <th>Created At</th>
+                    <th>Updated At</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="situs : ${situs}">
+                    <td th:text="${situs.id}"></td>
+                    <td th:text="${situs.title}"></td>
+                    <td th:text="${situs.content}"></td>
+                    <td>
+                        <img th:if="${situs.imageUrl}" th:src="${situs.imageUrl}" alt="Situs Image" class="img-thumbnail clickable-image" style="max-width: 100px; cursor: pointer;" data-bs-toggle="modal" data-bs-target="#imageModal" th:data-image-url="${situs.imageUrl}">
+                        <span th:unless="${situs.imageUrl}">No Image</span>
+                    </td>
+                    <td th:text="${#temporals.format(situs.createdAt, 'dd-MM-yyyy HH:mm')}"></td>
+                    <td th:text="${situs.updatedAt != null ? #temporals.format(situs.updatedAt, 'dd-MM-yyyy HH:mm') : 'N/A'}"></td>
+                    <td>
+                        <a th:href="@{/situs/edit/{id}(id=${situs.id})}" class="btn btn-sm btn-warning">Edit</a>
+                        <a sec:authorize="hasRole('ADMIN')" th:href="@{/situs/delete/{id}(id=${situs.id})}" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete this situs?');">Delete</a>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Image Modal -->
+    <div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="imageModalLabel">Situs Image Preview</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <img src="" class="img-fluid" id="modalImage" alt="Situs Image">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script th:if="${message}">
+        document.addEventListener('DOMContentLoaded', function() {
+            var toastLiveExample = document.getElementById('liveToast');
+            var toast = new bootstrap.Toast(toastLiveExample);
+            toast.show();
+        });
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var imageModal = document.getElementById('imageModal');
+            imageModal.addEventListener('show.bs.modal', function (event) {
+                var button = event.relatedTarget; // Button that triggered the modal
+                var imageUrl = button.getAttribute('data-image-url'); // Extract info from data-image-url attribute
+                var modalImage = imageModal.querySelector('#modalImage');
+                modalImage.src = imageUrl;
+            });
+        });
+    </script>
+</body>
+</html>

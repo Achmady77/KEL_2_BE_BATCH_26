@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="id" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catatan</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        /* Gaya kustom untuk pemotongan konten */
+        .content-preview {
+            max-height: 100px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .content-full {
+            white-space: pre-wrap;
+        }
+
+        .image-column {
+            max-width: 100px;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark" style="background: linear-gradient(to right, #818078, #c1afa4);">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="#">
+            <img th:src="@{/images/historialogo.png}" alt="Logo" width="150" height="100" class="d-inline-block align-text-top me-2">
+            Beranda
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a th:href="@{/logout}" class="btn btn-danger">Keluar</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-3">
+    <h1 class="mb-4">Daftar Situs Sejarah</h1>
+    <div class="d-flex justify-content-between mb-3">
+        <a th:href="@{/notes/new}" class="btn btn-primary">Tambah Data Baru</a>
+        <form th:action="@{/notes}" method="get" class="d-flex">
+            <input type="text" name="keyword" th:value="${keyword}" class="form-control me-2" placeholder="Cari berdasarkan judul..." aria-label="Search">
+            <button class="btn btn-outline-secondary" type="submit">Cari</button>
+        </form>
+    </div>
+
+    <!-- Notifikasi Toast -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div id="liveToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true" th:classappend="${messageType == 'success' ? 'text-bg-success' : 'text-bg-danger'}" th:if="${message}">
+            <div class="toast-header">
+                <strong class="me-auto">Pemberitahuan</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body" th:text="${message}">
+                Pesan Pemberitahuan.
+            </div>
+        </div>
+    </div>
+
+    <table class="table table-striped table-bordered table-hover">
+        <thead class="table-dark">
+        <tr>
+            <th>ID</th>
+            <th>Judul</th>
+            <th>Konten</th>
+            <th>Gambar</th>
+            <th>Dibuat Pada</th>
+            <th>Diperbarui Pada</th>
+            <th>Aksi</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="note : ${notes}">
+            <td th:text="${note.id}"></td>
+            <td th:text="${note.title}"></td>
+            <td>
+                <div class="content-preview" th:text="${note.content}" th:utext="${note.content}"></div>
+                <button class="btn btn-link btn-sm" data-bs-toggle="modal" data-bs-target="#contentModal" th:data-content="${note.content}">Baca Selengkapnya</button>
+            </td>
+            <td class="image-column">
+                <img th:if="${note.imageUrl}" th:src="@{${note.imageUrl}}" alt="Gambar Catatan" class="img-thumbnail clickable-image" data-bs-toggle="modal" data-bs-target="#imageModal" th:data-image-url="${note.imageUrl}" onerror="this.onerror=null;this.src='https://via.placeholder.com/100x100?text=No+Image';">
+                <span th:unless="${note.imageUrl}">Tidak Ada Gambar</span>
+            </td>
+            <td th:text="${#temporals.format(note.createdAt, 'dd-MM-yyyy HH:mm')}"></td>
+            <td th:text="${note.updatedAt != null ? #temporals.format(note.updatedAt, 'dd-MM-yyyy HH:mm') : 'N/A'}"></td>
+            <td>
+                <a th:href="@{/notes/edit/{id}(id=${note.id})}" class="btn btn-sm btn-warning">Edit</a>
+                <a sec:authorize="hasRole('ADMIN')" th:href="@{/notes/delete/{id}(id=${note.id})}" class="btn btn-sm btn-danger" onclick="return confirm('Apakah Anda yakin ingin menghapus catatan ini?');">Hapus</a>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- Modal untuk Pratinjau Gambar -->
+<div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="imageModalLabel">Pratinjau Gambar Situs</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <img src="" class="img-fluid" id="modalImage" alt="Gambar Catatan">
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal untuk Pratinjau Konten -->
+<div class="modal fade" id="contentModal" tabindex="-1" aria-labelledby="contentModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="contentModalLabel">Konten Lengkap</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="contentModalBody">
+                <!-- Konten lengkap akan muncul di sini -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Modal untuk Pratinjau Gambar
+        var imageModal = document.getElementById('imageModal');
+        imageModal.addEventListener('show.bs.modal', function (event) {
+            var button = event.relatedTarget;
+            var imageUrl = button.getAttribute('data-image-url');
+            var modalImage = imageModal.querySelector('#modalImage');
+            modalImage.src = imageUrl;
+        });
+
+        // Modal untuk Pratinjau Konten Lengkap
+        var contentModal = document.getElementById('contentModal');
+        contentModal.addEventListener('show.bs.modal', function (event) {
+            var button = event.relatedTarget;
+            var content = button.getAttribute('data-content');
+            var contentModalBody = contentModal.querySelector('#contentModalBody');
+            contentModalBody.textContent = content; // Menampilkan konten lengkap
+        });
+
+        // Menampilkan Toast jika ada pesan
+        var toastLiveExample = document.getElementById('liveToast');
+        if (toastLiveExample) {
+            var toast = new bootstrap.Toast(toastLiveExample);
+            toast.show();
+        }
+    });
+</script>
+
+</body>
+</html>
